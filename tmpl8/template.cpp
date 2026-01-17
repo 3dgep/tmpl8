@@ -13,7 +13,7 @@
 //#define FULLSCREEN
 //#define ADVANCEDGL
 
-#include "game.h"
+#include "../game.h"
 
 #include <fcntl.h>
 #include <io.h>
@@ -144,7 +144,7 @@ mat4 mat4::rotatez( const float a )
 	return M;
 }
 
-void NotifyUser( char* s )
+void NotifyUser( const char* s )
 {
 	HWND hApp = FindWindow(nullptr, TemplateVersion);
 	MessageBox( hApp, s, "ERROR", MB_OK );
@@ -167,7 +167,7 @@ typedef BOOL(APIENTRY* PFNWGLSWAPINTERVALFARPROC)(int);
 PFNWGLSWAPINTERVALFARPROC wglSwapIntervalEXT = 0;
 unsigned int framebufferTexID[2];
 GLuint fbPBO[2];
-unsigned char* framedata = 0;
+unsigned const char* framedata = 0;
 
 #endif
 
@@ -233,7 +233,7 @@ bool createFBtexture()
 	glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, 0 );
 	glBindTexture( GL_TEXTURE_2D, framebufferTexID[0] );
 	glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, fbPBO[0] );
-	framedata = (unsigned char*)glMapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY_ARB );
+	framedata = (unsigned const char*)glMapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY_ARB );
 	if (!framedata) return false;
 	memset( framedata, 0, ScreenWidth * ScreenHeight * 4 );
 	return (glGetError() == 0);
@@ -279,7 +279,7 @@ void swap()
     nextindex = (index + 1) % 2;
 	index = (index + 1) % 2;
 	glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, fbPBO[nextindex] );	
-	framedata = (unsigned char*)glMapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY_ARB );
+	framedata = (unsigned const char*)glMapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY_ARB );
     glColor3f( 1.0f, 1.0f, 1.0f );
     glBegin( GL_QUADS );
 	glNormal3f( 0, 0, 1 );

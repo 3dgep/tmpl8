@@ -1,5 +1,7 @@
 #include "game.h"
-#include "surface.h"
+
+#include "tmpl8/surface.h"
+
 #include <cstdio> //printf
 
 namespace Tmpl8
