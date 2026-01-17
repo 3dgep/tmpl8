@@ -27,6 +27,6 @@
     <Text Include="_readme.txt">
       <Filter>template code</Filter>
     </Text>
-    <Text Include="..\_readme.txt" />
+    <Text Include="..\README.md" />
   </ItemGroup>
 </Project>

@@ -1,6 +1,7 @@
-BRIEF INFO ON THE 2019-08 TEMPLATE
+BRIEF INFO ON THE 2026 TEMPLATE
 Template, BUAS version https://www.buas.nl/games
 IGAD/BUAS(NHTV)/UU - Jacco Bikker - 2006-2020
+CMGT/BUAS - Jeremiah van Oosten - 2021-2026
 
 Purpose:
 The template has been designed to make it easy to start coding C++
@@ -12,7 +13,7 @@ is available, such as sprites, bitmap fonts, and vector math support.
 How to use:
 1. Copy the template folder (or extract the zip) to a fresh folder for
    your project. 
-2. Open the .sln file with any version of Visual Studio 2019.
+2. Open the .sln file with any version of Visual Studio 2022 or open the .slnx file with Visual Studio 2026.
 3. Replace the example code in game.cpp with your own code.
 4. Copy the 64-bit dll's from dlls_x64 to the project folder if you
    want to run a 64-bit build.
@@ -48,14 +49,18 @@ Starting January 2017, the name of the template represents the version.
 This version also appears in the title of the window. Make sure you
 are using the most recent version.
 
-Breda, 2014-2019, Games @ Breda University (NHTV/IGAD)
+Breda, 2014-2026, Games @ Breda University (NHTV/IGAD)
 Utrecht, 2015-2019, Utrecht University
-Report problems and suggestions to Robbie Grigg if working on this 
-connected to Breda University then email grigg.r@buas.nl
-otherwise bikker.j@gmail.com .
+Report problems and suggestions to Jeremiah van Oosten if working on this 
+connected to Breda University then email oosten.j@buas.nl
+otherwise bikker.j@gmail.com.
 
 
 Changelog
+
+v2026:
+Update project and solution files to Visual Studio 2022 and Viasual Studio 2026.
+Fix compiler errors when using C++17 or higher.
 
 v2019-08:
 removed headers from the precompiled header file to speed up compilation 

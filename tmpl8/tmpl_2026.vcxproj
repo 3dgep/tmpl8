@@ -131,8 +131,10 @@
     <ClInclude Include="template.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\_readme.txt" />
     <Text Include="_readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
