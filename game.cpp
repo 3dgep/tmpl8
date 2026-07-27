@@ -20,6 +20,18 @@ namespace Tmpl8
     {
     }
 
+    // -----------------------------------------------------------
+    // Process keyboard input
+    // ----------------------------------------------------------
+    void Game::ProcessInput()
+    {
+        // Update key states
+        pressed = keys & ~held; // keys that are currently down but were not down in the previous tick
+        released = ~keys & held; // keys that were down in the previous tick but are not down now
+        held = keys; // update prevKeys for the next tick
+    }
+
+
     static Sprite rotatingGun(new Surface("assets/aagun.tga"), 36);
     static int frame = 0;
 
@@ -28,10 +40,8 @@ namespace Tmpl8
     // -----------------------------------------------------------
     void Game::Tick(float deltaTime)
     {
-        // Update key states
-        pressed = keys & ~held; // keys that are currently down but were not down in the previous tick
-        released = ~keys & held; // keys that were down in the previous tick but are not down now
-        held = keys; // update prevKeys for the next tick
+        // Call this once per tick.
+        ProcessInput();
 
         // Handle input.
         if (GetKey(SDL_SCANCODE_W))

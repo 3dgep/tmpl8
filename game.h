@@ -16,11 +16,12 @@ public:
 	void MouseUp( int button ) { /* implement if you want to detect mouse button presses */ }
 	void MouseDown( int button ) { /* implement if you want to detect mouse button presses */ }
 	void MouseMove( int x, int y ) { /* implement if you want to detect mouse movement */ }
-	void KeyUp(SDL_Scancode key) { keys.reset(key); }
-	void KeyDown(SDL_Scancode key) { keys.set(key); }
+	void KeyDown(SDL_Scancode key) { keys.set(key); } // Handle key down events.
+	void KeyUp(SDL_Scancode key) { keys.reset(key); } // Handle key up events.
     bool GetKey(SDL_Scancode key) const { return held.test(key); } // returns true if the key is currently held down
     bool GetKeyPressed(SDL_Scancode key) const { return pressed.test(key); } // returns true if the key was pressed since the last Tick
     bool GetKeyReleased(SDL_Scancode key) const { return released.test(key); } // returns true if the key was released since the last Tick
+	void ProcessInput(); // Call this once in Tick to update the keyboard state.
 private:
 	Surface* screen;
     std::bitset<SDL_NUM_SCANCODES> keys; // store key states here
