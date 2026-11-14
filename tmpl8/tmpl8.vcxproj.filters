@@ -10,13 +10,13 @@
     <ClCompile Include="..\game.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="surface.h">
+    <ClInclude Include="surface.hpp">
       <Filter>template code</Filter>
     </ClInclude>
-    <ClInclude Include="template.h">
+    <ClInclude Include="template.hpp">
       <Filter>template code</Filter>
     </ClInclude>
-    <ClInclude Include="..\game.h" />
+    <ClInclude Include="..\game.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="template code">
@@ -24,11 +24,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="_readme.txt">
-      <Filter>template code</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\README.md" />
+    <None Include="web-shell.html">
+      <Filter>template code</Filter>
+    </None>
   </ItemGroup>
 </Project>

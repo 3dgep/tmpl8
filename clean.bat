@@ -1,48 +1,10 @@
-del *.cdf
-del *.cache
-del *.obj
-del *.obj.enc
-del *.ipdb
-del *.iobj
-del *.resources
-del *.tlb
-del *.tli
-del *.tlh
-del *.tmp
-del *.rsp
-del *.pgc
-del *.pgd
-del *.meta
-del *.tlog
-del *.manifest
-del *.res
-del *.pch
-del *.idb
-del *.rep
-del *.xdc
-del *_manifest.rc
-del *.sbr
-del *.metagen
-del *.ncb
-del *.ilk
-del *.lib
-del *.sdf
-del *.exp
-del *.map
-del *.pdb
-del *.lastcodeanalysissucceeded
-del Upgradelog.xml
-del *.exe
-del *.bsc
-del applog.txt
-del *.suo /AH
-del *.user
-del *.o
-del *.VC.db
-del tinybvh.exe
-rd ipch /S /Q
-rd x64\release\template.tlog
-rd release /S /Q
-rd debug /S /Q
-rd x64 /S /Q
-rd .vs /S /Q
+@echo off
+rem Deletes everything Visual Studio generates, so the folder is small enough to zip and hand in.
+rem Close Visual Studio first. Double-click this file to run it.
+cd /d "%~dp0"
+if exist .vs rd /s /q .vs
+if exist web-build rd /s /q web-build
+if exist build rd /s /q build
+del /q *.exe *.pdb *.ilk SDL3.dll 2>nul
+echo Done: the template folder is clean.
+pause

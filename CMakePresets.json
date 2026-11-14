@@ -1,0 +1,133 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 26,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}"
+    },
+    {
+      "name": "windows-vs",
+      "displayName": "Windows (Visual Studio 2026)",
+      "description": "Visual Studio 2026 solution in build/windows-vs (x64).",
+      "inherits": "base",
+      "generator": "Visual Studio 18 2026",
+      "architecture": {
+        "value": "x64",
+        "strategy": "set"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "windows-ninja",
+      "displayName": "Windows (Ninja, MSVC)",
+      "description": "Ninja Multi-Config with the MSVC compiler (x64). Use it from Visual Studio (Open Folder) or a Developer Command Prompt.",
+      "inherits": "base",
+      "generator": "Ninja Multi-Config",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "linux",
+      "displayName": "Linux (Ninja)",
+      "description": "Ninja Multi-Config with the default compiler. Uses an installed SDL3, or builds SDL3 from source.",
+      "inherits": "base",
+      "generator": "Ninja Multi-Config",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "web",
+      "displayName": "Web (Emscripten, Ninja)",
+      "description": "Ninja Multi-Config with Emscripten. Installs the emsdk the first time if Emscripten is not found (see cmake/EmscriptenToolchain.cmake).",
+      "inherits": "base",
+      "generator": "Ninja Multi-Config",
+      "toolchainFile": "${sourceDir}/cmake/EmscriptenToolchain.cmake"
+    }
+  ],
+  "buildPresets": [
+    { "name": "windows-vs-debug", "displayName": "Debug", "configurePreset": "windows-vs", "configuration": "Debug" },
+    { "name": "windows-vs-release", "displayName": "Release", "configurePreset": "windows-vs", "configuration": "Release" },
+    { "name": "windows-vs-relwithdebinfo", "displayName": "RelWithDebInfo (optimized, with debug information: for profiling)", "configurePreset": "windows-vs", "configuration": "RelWithDebInfo" },
+    { "name": "windows-ninja-debug", "displayName": "Debug", "configurePreset": "windows-ninja", "configuration": "Debug" },
+    { "name": "windows-ninja-release", "displayName": "Release", "configurePreset": "windows-ninja", "configuration": "Release" },
+    { "name": "windows-ninja-relwithdebinfo", "displayName": "RelWithDebInfo (optimized, with debug information: for profiling)", "configurePreset": "windows-ninja", "configuration": "RelWithDebInfo" },
+    { "name": "linux-debug", "displayName": "Debug", "configurePreset": "linux", "configuration": "Debug" },
+    { "name": "linux-release", "displayName": "Release", "configurePreset": "linux", "configuration": "Release" },
+    { "name": "linux-relwithdebinfo", "displayName": "RelWithDebInfo (optimized, with debug information: for profiling)", "configurePreset": "linux", "configuration": "RelWithDebInfo" },
+    { "name": "web-debug", "displayName": "Debug", "configurePreset": "web", "configuration": "Debug" },
+    { "name": "web-release", "displayName": "Release", "configurePreset": "web", "configuration": "Release" },
+    { "name": "web-relwithdebinfo", "displayName": "RelWithDebInfo (optimized, with debug information: for profiling)", "configurePreset": "web", "configuration": "RelWithDebInfo" }
+  ],
+  "workflowPresets": [
+    {
+      "name": "windows-vs",
+      "displayName": "Windows (Visual Studio 2026): configure and build Release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "windows-vs"
+        },
+        {
+          "type": "build",
+          "name": "windows-vs-release"
+        }
+      ]
+    },
+    {
+      "name": "linux",
+      "displayName": "Linux: configure and build Release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux"
+        },
+        {
+          "type": "build",
+          "name": "linux-release"
+        }
+      ]
+    },
+    {
+      "name": "web",
+      "displayName": "Web: configure and build Release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "web"
+        },
+        {
+          "type": "build",
+          "name": "web-release"
+        }
+      ]
+    }
+  ]
+}

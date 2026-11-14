@@ -426,3 +426,9 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Template build output (next to tmpl8.slnx)
+/*.exe
+/SDL3.dll
+/web-build/
+/build/

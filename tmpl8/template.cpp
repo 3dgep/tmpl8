@@ -1,401 +1,311 @@
 // Template, BUAS version https://www.buas.nl/games
 // IGAD/BUAS(NHTV)/UU - Jacco Bikker - 2006-2020
+// CMGT/BUAS - Jeremiah van Oosten - 2021-2026
 
-// Note:
-// this version of the template uses SDL2 for all frame buffer interaction
-// see: https://www.libsdl.org
+// This version of the template uses SDL3 to open the window, show the frame buffer and read the input.
+// See: https://www.libsdl.org
+//
+// SDL runs the main loop and calls the functions below: SDL_AppInit once at the start, SDL_AppEvent for
+// every input event, SDL_AppIterate once per frame, and SDL_AppQuit at the end. This way the same code
+// runs on Windows and in a web browser (see build-web.bat).
 
-#ifdef _MSC_VER
-#pragma warning (disable : 4530) // complaint about exception handler
-#pragma warning (disable : 4311) // pointer truncation from HANDLE to long
+#define SDL_MAIN_USE_CALLBACKS
+#include "template.hpp"
+#include "surface.hpp"
+#include "game.hpp"
+
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+
+// In a browser, the whole page goes fullscreen (the canvas fills the page, see web-shell.html), with the browser's
+// Fullscreen API. If the browser refuses (e.g. on a page that doesn't allow it), nothing changes.
+EM_JS( void, Tmpl8_SetPageFullscreen, (bool fullscreen), {
+	if (fullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+	if (!fullscreen && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+} );
+EM_JS( bool, Tmpl8_IsPageFullscreen, (), {
+	return !!document.fullscreenElement;
+} );
+// A browser only allows fullscreen in response to a key press or a click: wait for the first one.
+EM_JS( void, Tmpl8_FullscreenOnFirstInput, (), {
+	const request = () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); };
+	window.addEventListener('keydown', request, { once: true, capture: true });
+	window.addEventListener('pointerdown', request, { once: true, capture: true });
+} );
 #endif
 
-//#define FULLSCREEN
-//#define ADVANCEDGL
-
-#include "../game.h"
-
-#include <fcntl.h>
-#include <io.h>
-#include "template.h"
-#include <corecrt_math.h>
-#include <SDL.h>
-#include "surface.h"
-#include <cstdio>
+#include <chrono>
+#include <cstdlib>
 #include <iostream>
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include <memory>
+#include <random>
 
-#ifdef ADVANCEDGL
-#define GLEW_BUILD
-extern "C"
+namespace Tmpl8 {
+
+namespace {
+
+SDL_Window* window = nullptr; // the game window (owned by SDL)
+
+std::mt19937& RandomGenerator()
 {
-#include "glew.h" 
+	static std::mt19937 generator{ std::random_device{}() };
+	return generator;
 }
-#include "gl.h"
-#include "wglext.h"
+
+} // namespace
+
+float Rand( float range )
+{
+	if (range <= 0.0f) return 0.0f;
+	return std::uniform_real_distribution<float>( 0.0f, range )( RandomGenerator() );
+}
+
+int IRand( int range )
+{
+	if (range <= 0) return 0;
+	return std::uniform_int_distribution<int>( 0, range - 1 )( RandomGenerator() );
+}
+
+void NotifyUser( const std::string& message )
+{
+	std::cerr << "ERROR: " << message << '\n';
+	SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, TemplateVersion, message.c_str(), window );
+	std::exit( 1 );
+}
+
+void SetFullscreen( bool fullscreen )
+{
+#ifdef __EMSCRIPTEN__
+	Tmpl8_SetPageFullscreen( fullscreen );
+#else
+	// Borderless fullscreen at the desktop resolution; the 800x512 image is scaled to fit (SDL_SCALEMODE_PIXELART).
+	if (window) SDL_SetWindowFullscreen( window, fullscreen );
+#endif
+}
+
+bool IsFullscreen()
+{
+#ifdef __EMSCRIPTEN__
+	return Tmpl8_IsPageFullscreen();
+#else
+	return window && (SDL_GetWindowFlags( window ) & SDL_WINDOW_FULLSCREEN) != 0;
+#endif
+}
+
+void ToggleFullscreen()
+{
+	SetFullscreen( !IsFullscreen() );
+}
+
+void SetVSync( bool vsync )
+{
+	SDL_Renderer* renderer = window ? SDL_GetRenderer( window ) : nullptr;
+	if (!renderer) return;
+#ifdef __EMSCRIPTEN__
+	// In a browser, frames are always shown in step with the screen (requestAnimationFrame).
+	(void)vsync;
+	SDL_SetRenderVSync( renderer, 1 );
+#else
+	SDL_SetRenderVSync( renderer, vsync ? 1 : 0 );
+#endif
+}
+
+bool IsVSync()
+{
+#ifdef __EMSCRIPTEN__
+	return true;
+#else
+	SDL_Renderer* renderer = window ? SDL_GetRenderer( window ) : nullptr;
+	int vsync = 0;
+	return renderer && SDL_GetRenderVSync( renderer, &vsync ) && vsync != 0;
+#endif
+}
+
+void ToggleVSync()
+{
+	SetVSync( !IsVSync() );
+}
+
+#ifndef __EMSCRIPTEN__
+// How much larger the window has to be on its display: 1.5 on Windows with 150% display scaling, so the 800x512
+// window is 1200x768 pixels there and looks as large as on a display with 100% scaling. (On macOS and Wayland,
+// window sizes are already scaled by the system, so this is 1 there.)
+static float WindowScale()
+{
+	const float density = SDL_GetWindowPixelDensity( window );
+	const float scale = density > 0 ? SDL_GetWindowDisplayScale( window ) / density : 1.0f;
+	return scale > 0 ? scale : 1.0f;
+}
+
+// Sizes the window to the 800x512 frame buffer times a_Scale (but not larger than the display).
+static void ScaleWindow( float a_Scale )
+{
+	if (SDL_GetWindowFlags( window ) & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_MAXIMIZED)) return;
+	int width = static_cast<int>(ScreenWidth * a_Scale + 0.5f), height = static_cast<int>(ScreenHeight * a_Scale + 0.5f);
+	SDL_Rect usable;
+	if (SDL_GetDisplayUsableBounds( SDL_GetDisplayForWindow( window ), &usable ))
+	{
+		// keep the shape of the frame buffer, and leave some room for the title bar
+		const float fit = Min( 1.0f, Min( usable.w / static_cast<float>(width), (usable.h - 64) / static_cast<float>(height) ) );
+		width = static_cast<int>(width * fit), height = static_cast<int>(height * fit);
+	}
+	SDL_SetWindowSize( window, width, height );
+}
 #endif
 
-namespace Tmpl8 { 
+// Everything the template needs while the application runs.
+struct Application
+{
+#ifndef __EMSCRIPTEN__
+	float windowScale = 1.0f; // see WindowScale()
+#endif
+	SDL_Renderer* renderer = nullptr;   // owned by SDL (destroyed in SDL_AppQuit)
+	SDL_Texture* frameBuffer = nullptr; // owned by SDL (destroyed in SDL_AppQuit)
+	Surface screen{ ScreenWidth, ScreenHeight }; // the game draws to this surface; it is shown after every Tick
+	Game game{ screen };
+	std::chrono::steady_clock::time_point previousTime;
+};
 
-double timer::inv_freq = 1;
-
-timer::timer(): start(get())
-{
-	init();
-}
-
-float timer::elapsed() const
-{
-	return (float)((get() - start) * inv_freq);
-}
-
-timer::value_type timer::get()
-{
-	LARGE_INTEGER c;
-	QueryPerformanceCounter(&c);
-	return c.QuadPart;
-}
-
-double timer::to_time(const value_type vt)
-{
-	return double(vt) * inv_freq;
-}
-
-void timer::reset()
-{
-	start = get();
-}
-
-void timer::init()
-{
-	LARGE_INTEGER f;
-	QueryPerformanceFrequency(&f);
-	inv_freq = 1000. / double(f.QuadPart);
-}
-
-// Math Stuff
-// ----------------------------------------------------------------------------
-vec3 normalize( const vec3& v ) { return v.normalized(); }
-vec3 cross( const vec3& a, const vec3& b ) { return a.cross( b ); }
-float dot( const vec3& a, const vec3& b ) { return a.dot( b ); }
-vec3 operator * ( const float& s, const vec3& v ) { return vec3( v.x * s, v.y * s, v.z * s ); }
-vec3 operator * ( const vec3& v, const float& s ) { return vec3( v.x * s, v.y * s, v.z * s ); }
-vec4 operator * ( const float& s, const vec4& v ) { return vec4( v.x * s, v.y * s, v.z * s, v.w * s ); }
-vec4 operator * ( const vec4& v, const float& s ) { return vec4( v.x * s, v.y * s, v.z * s, v.w * s ); }
-vec4 operator * ( const vec4& v, const mat4& M )
-{
-	vec4 mx( M.cell[0], M.cell[4], M.cell[8], M.cell[12] );
-	vec4 my( M.cell[1], M.cell[5], M.cell[9], M.cell[13] );
-	vec4 mz( M.cell[2], M.cell[6], M.cell[10], M.cell[14] );
-	vec4 mw( M.cell[3], M.cell[7], M.cell[11], M.cell[15] );
-	return v.x * mx + v.y * my + v.z * mz + v.w * mw;
-}
-
-mat4::mat4()
-{
-	memset(cell, 0, 64);
-	cell[0] = cell[5] = cell[10] = cell[15] = 1;
-}
-
-mat4 mat4::identity()
-{
-	mat4 r;
-	memset(r.cell, 0, 64);
-	r.cell[0] = r.cell[5] = r.cell[10] = r.cell[15] = 1.0f;
-	return r;
-}
-
-mat4 mat4::rotate( const vec3 l, const float a )
-{
-	// http://inside.mines.edu/fs_home/gmurray/ArbitraryAxisRotation
-	mat4 M;
-	const float u = l.x, v = l.y, w = l.z, ca = cosf( a ), sa = sinf( a );
-	M.cell[0] = u * u + (v * v + w * w) * ca, M.cell[1] = u * v * (1 - ca) - w * sa;
-	M.cell[2] = u * w * (1 - ca) + v * sa, M.cell[4] = u * v * (1 - ca) + w * sa;
-	M.cell[5] = v * v + (u * u + w * w) * ca, M.cell[6] = v * w * (1 - ca) - u * sa;
-	M.cell[8] = u * w * (1 - ca) - v * sa, M.cell[9] = v * w * (1 - ca) + u * sa;
-	M.cell[10] = w * w  + (u * u + v * v) * ca;
-	M.cell[3] = M.cell[7] = M.cell[11] = M.cell[12] = M.cell[13] = M.cell[14] = 0, M.cell[15] = 1;
-	return M;
-}
-mat4 mat4::rotatex( const float a )
-{
-	mat4 M;
-	const float ca = cosf( a ), sa = sinf( a );
-	M.cell[5] = ca, M.cell[6] = -sa;
-	M.cell[9] = sa, M.cell[10] = ca;
-	return M;
-}
-mat4 mat4::rotatey( const float a )
-{
-	mat4 M;
-	const float ca = cosf( a ), sa = sinf( a );
-	M.cell[0] = ca, M.cell[2] = sa;
-	M.cell[8] = -sa, M.cell[10] = ca;
-	return M;
-}
-mat4 mat4::rotatez( const float a )
-{
-	mat4 M;
-	const float ca = cosf( a ), sa = sinf( a );
-	M.cell[0] = ca, M.cell[1] = -sa;
-	M.cell[4] = sa, M.cell[5] = ca;
-	return M;
-}
-
-void NotifyUser( const char* s )
-{
-	HWND hApp = FindWindow(nullptr, TemplateVersion);
-	MessageBox( hApp, s, "ERROR", MB_OK );
-	exit( 0 );
-}
-
-}
+} // namespace Tmpl8
 
 using namespace Tmpl8;
-using namespace std;
 
-#ifdef ADVANCEDGL
-
-PFNGLGENBUFFERSPROC glGenBuffers = 0;
-PFNGLBINDBUFFERPROC glBindBuffer = 0;
-PFNGLBUFFERDATAPROC glBufferData = 0;
-PFNGLMAPBUFFERPROC glMapBuffer = 0;
-PFNGLUNMAPBUFFERPROC glUnmapBuffer = 0;
-typedef BOOL(APIENTRY* PFNWGLSWAPINTERVALFARPROC)(int);
-PFNWGLSWAPINTERVALFARPROC wglSwapIntervalEXT = 0;
-unsigned int framebufferTexID[2];
-GLuint fbPBO[2];
-unsigned const char* framedata = 0;
-
-#endif
-
-int ACTWIDTH, ACTHEIGHT;
-static bool firstframe = true;
-
-Surface* surface = 0;
-Game* game = 0;
-SDL_Window* window = 0;
-
-#ifdef _MSC_VER
-bool redirectIO()
+SDL_AppResult SDL_AppInit( void** appstate, int argc, char* argv[] )
 {
-	CONSOLE_SCREEN_BUFFER_INFO coninfo;
-	AllocConsole();
-	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &coninfo);
-	coninfo.dwSize.Y = 500;
-	SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coninfo.dwSize);
-	FILE* stream = nullptr;
-	if (freopen_s(&stream, "CONOUT$", "w", stdout) != 0)
-		return false;
-	if (freopen_s(&stream, "CONOUT$", "w", stderr) != 0)
-		return false;
-	if (freopen_s(&stream, "CONIN$", "r", stdin) != 0)
-		return false;
-	setvbuf(stdout, NULL, _IONBF, 0);
-	setvbuf(stderr, NULL, _IONBF, 0);
-	setvbuf(stdin, NULL, _IONBF, 0);
-	std::ios::sync_with_stdio();
-	return true;
-}
+	std::cout << "application started.\n";
+
+	if (!SDL_Init( SDL_INIT_VIDEO )) NotifyUser( SDL_GetError() );
+
+	auto app = std::make_unique<Application>();
+
+	// The window can be resized (or made fullscreen): the 800x512 frame buffer is scaled to fit.
+	// SDL_WINDOW_HIGH_PIXEL_DENSITY: the renderer uses all the pixels of the window (e.g. 1200x768 pixels for an
+	// 800x512 window with 150% display scaling), so SDL_SCALEMODE_PIXELART does all the scaling and keeps it sharp.
+	SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
+#ifdef __EMSCRIPTEN__
+	if constexpr (StartFullscreen) Tmpl8_FullscreenOnFirstInput();
+#else
+	if constexpr (StartFullscreen) flags |= SDL_WINDOW_FULLSCREEN;
 #endif
-
-#ifdef ADVANCEDGL
-
-bool createFBtexture()
-{
-	glGenTextures( 2, framebufferTexID );
-	if (glGetError()) return false;
-	for ( int i = 0; i < 2; i++ ) 
+#ifdef __EMSCRIPTEN__
+	// In a browser, the page (web-shell.html) makes the canvas fill the whole browser window and SDL follows its size.
+	// With SDL_WINDOW_HIGH_PIXEL_DENSITY, the canvas gets as many pixels as the screen has, so the browser doesn't
+	// scale it again.
+	// SDL_WINDOW_OPENGL: without it, SDL 3.4.2 (the version in Emscripten) re-creates the window for the renderer
+	// and the canvas ends up 1x1 pixels. (SDL_WINDOW_FILL_DOCUMENT doesn't work in that version: the canvas stays 0x0.)
+	flags |= SDL_WINDOW_OPENGL;
+#endif
+	if (!SDL_CreateWindowAndRenderer( TemplateVersion, ScreenWidth, ScreenHeight, flags, &window, &app->renderer )) NotifyUser( SDL_GetError() );
+#ifndef __EMSCRIPTEN__
+	// On a display with e.g. 150% scaling, make the window 1.5x as large, and keep it in the centre of the display.
+	app->windowScale = WindowScale();
+	if (app->windowScale != 1.0f)
 	{
-		glBindTexture( GL_TEXTURE_2D, framebufferTexID[i] );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, ScreenWidth, ScreenHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL );
-		glBindTexture(GL_TEXTURE_2D, 0);
-		if (glGetError()) return false;
+		ScaleWindow( app->windowScale );
+		SDL_SetWindowPosition( window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED );
 	}
-	const int sizeMemory = 4 * ScreenWidth * ScreenHeight;
-	glGenBuffers( 2, fbPBO );
-	glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, fbPBO[0] );	
-	glBufferData( GL_PIXEL_UNPACK_BUFFER_ARB, sizeMemory, NULL, GL_STREAM_DRAW_ARB );
-	glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, fbPBO[1] );	
-	glBufferData( GL_PIXEL_UNPACK_BUFFER_ARB, sizeMemory, NULL, GL_STREAM_DRAW_ARB );
-	glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, 0 );
-	glBindTexture( GL_TEXTURE_2D, framebufferTexID[0] );
-	glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, fbPBO[0] );
-	framedata = (unsigned const char*)glMapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY_ARB );
-	if (!framedata) return false;
-	memset( framedata, 0, ScreenWidth * ScreenHeight * 4 );
-	return (glGetError() == 0);
+#endif
+	SetVSync( StartVSync );
+	SDL_SetRenderLogicalPresentation( app->renderer, ScreenWidth, ScreenHeight, SDL_LOGICAL_PRESENTATION_LETTERBOX );
+	app->frameBuffer = SDL_CreateTexture( app->renderer, SDL_PIXELFORMAT_XRGB8888, SDL_TEXTUREACCESS_STREAMING, ScreenWidth, ScreenHeight );
+	if (!app->frameBuffer) NotifyUser( SDL_GetError() );
+	SDL_SetTextureScaleMode( app->frameBuffer, SDL_SCALEMODE_PIXELART );
+
+	app->screen.Clear( 0 );
+	app->game.Init();
+	app->previousTime = std::chrono::steady_clock::now();
+	// SDL keeps the application in a void* (SDL is written in C) and passes it to the other callbacks;
+	// SDL_AppQuit takes it back and deletes it.
+	*appstate = app.release();
+	return SDL_APP_CONTINUE;
 }
 
-bool init()
+SDL_AppResult SDL_AppEvent( void* appstate, SDL_Event* event )
 {
-	fbPBO[0] = fbPBO[1] = -1;
-	glGenBuffers =  (PFNGLGENBUFFERSPROC)wglGetProcAddress( "glGenBuffersARB" );
-	glBindBuffer =  (PFNGLBINDBUFFERPROC)wglGetProcAddress( "glBindBufferARB" );
-	glBufferData =  (PFNGLBUFFERDATAPROC)wglGetProcAddress( "glBufferDataARB" );
-	glMapBuffer  =  (PFNGLMAPBUFFERPROC)wglGetProcAddress( "glMapBufferARB" );
-	glUnmapBuffer = (PFNGLUNMAPBUFFERPROC)wglGetProcAddress( "glUnmapBufferARB" );
-	wglSwapIntervalEXT = (PFNWGLSWAPINTERVALFARPROC)wglGetProcAddress( "wglSwapIntervalEXT" );
-	if ((!glGenBuffers) || (!glBindBuffer) || (!glBufferData) || (!glMapBuffer) || (!glUnmapBuffer)) return false;
-	if (glGetError()) return false;
-	glViewport( 0, 0, ScreenWidth, ScreenHeight );
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity();
- 	glOrtho( 0, 1, 0, 1, -1, 1 );
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
-	glEnable( GL_TEXTURE_2D );
-	glShadeModel( GL_SMOOTH );
-	if (!createFBtexture()) return false;
-	glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
-	glClear( GL_COLOR_BUFFER_BIT );
-	glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-	if (wglSwapIntervalEXT) wglSwapIntervalEXT( 0 );
-	surface = new Surface( ScreenWidth, ScreenHeight, 0, ScreenWidth );
-	return true;
-}
-
-void swap()
-{
-	static int index = 0;
-	int nextindex;
-	glUnmapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB );
-	glBindTexture( GL_TEXTURE_2D, framebufferTexID[index] );
-	glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, fbPBO[index] );
-	glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, ScreenWidth, ScreenHeight, GL_BGRA, GL_UNSIGNED_BYTE, 0 ); 
-    nextindex = (index + 1) % 2;
-	index = (index + 1) % 2;
-	glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, fbPBO[nextindex] );	
-	framedata = (unsigned const char*)glMapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY_ARB );
-    glColor3f( 1.0f, 1.0f, 1.0f );
-    glBegin( GL_QUADS );
-	glNormal3f( 0, 0, 1 );
-	glTexCoord2f( 0.0f, 0.0f );
-	glVertex2f  ( 0.0f, 1.0f );
-	glTexCoord2f( 1.0f, 0.0f );
-	glVertex2f  ( 1.0f, 1.0f );
-	glTexCoord2f( 1.0f, 1.0f );
-	glVertex2f  ( 1.0f, 0.0f );
-	glTexCoord2f( 0.0f, 1.0f );
-	glVertex2f  ( 0.0f, 0.0f );
-    glEnd();
-    glBindTexture( GL_TEXTURE_2D, 0 );	
-   	SDL_GL_SwapWindow( window ); 
-}
-
-#endif
-
-int main( int argc, char **argv ) 
-{  
-#ifdef _MSC_VER
-    if (!redirectIO())
-        return 1;
-#endif
-	printf( "application started.\n" );
-	SDL_Init( SDL_INIT_VIDEO );
-#ifdef ADVANCEDGL
-#ifdef FULLSCREEN
-	window = SDL_CreateWindow(TemplateVersion, 100, 100, ScreenWidth, ScreenHeight, SDL_WINDOW_FULLSCREEN|SDL_WINDOW_OPENGL );
-#else
-	window = SDL_CreateWindow(TemplateVersion, 100, 100, ScreenWidth, ScreenHeight, SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL );
-#endif
-	SDL_GLContext glContext = SDL_GL_CreateContext( window);
-	init();
-	ShowCursor( false );
-#else
-#ifdef FULLSCREEN
-	window = SDL_CreateWindow(TemplateVersion, 100, 100, ScreenWidth, ScreenHeight, SDL_WINDOW_FULLSCREEN );
-#else
-	window = SDL_CreateWindow(TemplateVersion, 100, 100, ScreenWidth, ScreenHeight, SDL_WINDOW_SHOWN );
-#endif
-	surface = new Surface( ScreenWidth, ScreenHeight );
-	surface->Clear( 0 );
-	SDL_Renderer* renderer = SDL_CreateRenderer( window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
-	SDL_Texture* frameBuffer = SDL_CreateTexture( renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, ScreenWidth, ScreenHeight );
-#endif
-	int exitapp = 0;
-	game = new Game();
-	game->SetTarget( surface );
-	timer t;
-	t.reset();
-	while (!exitapp) 
+	auto* app = static_cast<Application*>(appstate);
+	// Mouse positions in frame buffer pixels, also when the window is scaled.
+	SDL_ConvertEventToRenderCoordinates( app->renderer, event );
+	switch (event->type)
 	{
-	#ifdef ADVANCEDGL
-		swap();
-		surface->SetBuffer( (Pixel*)framedata );
-	#else
-		void* target = 0;
-		int pitch;
-		SDL_LockTexture( frameBuffer, NULL, &target, &pitch );
-		if (pitch == (surface->GetWidth() * 4))
+	case SDL_EVENT_QUIT:
+		return SDL_APP_SUCCESS;
+#ifndef __EMSCRIPTEN__
+	case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
+	{
+		// The window moved to a display with a different scaling: keep it the same size on screen.
+		const float scale = WindowScale();
+		if (scale != app->windowScale)
 		{
-			memcpy( target, surface->GetBuffer(), ScreenWidth * ScreenHeight * 4 );
+			int width, height;
+			SDL_GetWindowSize( window, &width, &height );
+			const float factor = scale / app->windowScale;
+			app->windowScale = scale;
+			if (!(SDL_GetWindowFlags( window ) & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_MAXIMIZED)))
+				SDL_SetWindowSize( window, static_cast<int>(width * factor + 0.5f), static_cast<int>(height * factor + 0.5f) );
 		}
-		else
-		{
-			unsigned char* t = (unsigned char*)target;
-			for( int i = 0; i < ScreenHeight; i++ )
-			{
-				memcpy( t, surface->GetBuffer() + i * ScreenWidth, ScreenWidth * 4 );
-				t += pitch;
-			}
-		}
-		SDL_UnlockTexture( frameBuffer );
-		SDL_RenderCopy( renderer, frameBuffer, NULL, NULL );
-		SDL_RenderPresent( renderer );
-	#endif
-		if (firstframe)
-		{
-			game->Init();
-			firstframe = false;
-		}
-		// calculate frame time and pass it to game->Tick
-		float elapsedTime = t.elapsed();
-		t.reset();
-
-		game->Tick( elapsedTime );
-		// event loop
-		SDL_Event event;
-		while (SDL_PollEvent( &event )) 
-		{
-			switch (event.type)
-			{
-			case SDL_QUIT:
-				exitapp = 1;
-				break;
-			case SDL_KEYDOWN:
-				if (event.key.keysym.sym == SDLK_ESCAPE) 
-				{
-					exitapp = 1;
-					// find other keys here: http://sdl.beuc.net/sdl.wiki/SDLKey
-				}
-				game->KeyDown( event.key.keysym.scancode );
-				break;
-			case SDL_KEYUP:
-				game->KeyUp( event.key.keysym.scancode );
-				break;
-			case SDL_MOUSEMOTION:
-				game->MouseMove( event.motion.xrel, event.motion.yrel );
-				break;
-			case SDL_MOUSEBUTTONUP:
-				game->MouseUp( event.button.button );
-				break;
-			case SDL_MOUSEBUTTONDOWN:
-				game->MouseDown( event.button.button );
-				break;
-			default:
-				break;
-			}
-		}
+		break;
 	}
-	game->Shutdown();
-	SDL_Quit();
-	return 0;
+#endif
+	case SDL_EVENT_KEY_DOWN:
+#ifndef __EMSCRIPTEN__ // in a browser, Escape leaves fullscreen instead
+		if (event->key.key == SDLK_ESCAPE) return SDL_APP_SUCCESS;
+#endif
+		// Alt+Enter or F11: switch between fullscreen and a window.
+		if (!event->key.repeat && (event->key.key == SDLK_F11 || (event->key.key == SDLK_RETURN && (event->key.mod & SDL_KMOD_ALT))))
+		{
+			ToggleFullscreen();
+			break;
+		}
+		if (!event->key.repeat) app->game.KeyDown( event->key.scancode ); // ignore the repeats while a key is held down
+		break;
+	case SDL_EVENT_KEY_UP:
+		app->game.KeyUp( event->key.scancode );
+		break;
+	case SDL_EVENT_MOUSE_MOTION:
+		app->game.MouseMove( static_cast<int>(event->motion.x), static_cast<int>(event->motion.y) );
+		break;
+	case SDL_EVENT_MOUSE_BUTTON_UP:
+		app->game.MouseUp( event->button.button );
+		break;
+	case SDL_EVENT_MOUSE_BUTTON_DOWN:
+		app->game.MouseDown( event->button.button );
+		break;
+	default:
+		break;
+	}
+	return SDL_APP_CONTINUE;
+}
+
+SDL_AppResult SDL_AppIterate( void* appstate )
+{
+	auto* app = static_cast<Application*>(appstate);
+
+	// Time since the previous frame, in milliseconds.
+	const auto currentTime = std::chrono::steady_clock::now();
+	const float deltaTime = std::chrono::duration<float, std::milli>( currentTime - app->previousTime ).count();
+	app->previousTime = currentTime;
+
+	app->game.ProcessInput();
+	app->game.Tick( deltaTime );
+
+	SDL_UpdateTexture( app->frameBuffer, nullptr, app->screen.GetBuffer(), app->screen.GetPitch() * static_cast<int>(sizeof( Pixel )) );
+	SDL_RenderClear( app->renderer );
+	SDL_RenderTexture( app->renderer, app->frameBuffer, nullptr, nullptr );
+	SDL_RenderPresent( app->renderer );
+	return SDL_APP_CONTINUE;
+}
+
+void SDL_AppQuit( void* appstate, SDL_AppResult result )
+{
+	const std::unique_ptr<Application> app( static_cast<Application*>(appstate) ); // deleted at the end of this function
+	if (!app) return;
+	app->game.Shutdown();
+	SDL_DestroyTexture( app->frameBuffer );
+	SDL_DestroyRenderer( app->renderer );
+	SDL_DestroyWindow( window );
+	window = nullptr;
+	// SDL calls SDL_Quit after this function.
 }
