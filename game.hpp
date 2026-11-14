@@ -14,6 +14,7 @@ public:
 	explicit Game( Surface& screen ) : screen( screen ) {}
 	void Init();
 	void Shutdown();
+	void DrawI( int x, int y ); // draws the letter I, x pixels to the right and y pixels down
 	void Tick( float deltaTime );
 	void MouseUp( int button ) { /* implement if you want to detect mouse button presses */ }
 	void MouseDown( int button ) { /* implement if you want to detect mouse button presses */ }

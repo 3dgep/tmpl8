@@ -19,22 +19,24 @@ namespace Tmpl8
     }
 
     // -----------------------------------------------------------
+    // Draws the letter I, x pixels to the right and y pixels down
+    // -----------------------------------------------------------
+    void Game::DrawI(int x, int y)
+    {
+        screen.Line(100 + x, 50 + y, 200 + x, 50 + y, 0xffffff);
+        screen.Line(150 + x, 50 + y, 150 + x, 300 + y, 0xffffff);
+        screen.Line(100 + x, 300 + y, 200 + x, 300 + y, 0xffffff);
+    }
+
+    // -----------------------------------------------------------
     // Main application tick function
     // -----------------------------------------------------------
     void Game::Tick(float deltaTime)
     {
-        // clear the graphics window
-        screen.Clear(0);
-        // print something in the graphics window
-        screen.Print("hello world", 2, 2, 0xffffff);
-        // print something to the text window
-        if (GetKeyPressed(SDL_SCANCODE_SPACE))
-        {
-            std::cout << "You pressed the space bar.\n";
-        }
-        // draw a sprite
-        rotatingGun.SetFrame(frame);
-        rotatingGun.Draw(screen, 100, 100);
-        if (++frame == 36) frame = 0;
+        screen.Clear(80);
+        DrawI(0, 0);
+        DrawI(1, 0);
+        DrawI(0, 1);
+        DrawI(1, 1);
     }
 }
