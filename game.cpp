@@ -21,20 +21,26 @@ namespace Tmpl8
     // -----------------------------------------------------------
     // Main application tick function
     // -----------------------------------------------------------
+    int spriteX = 0;
+    int spriteY = 100;
+    int speed = 1;
     void Game::Tick(float deltaTime)
     {
-        // clear the graphics window
-        screen.Clear(0);
-        // print something in the graphics window
-        screen.Print("hello world", 2, 2, 0xffffff);
-        // print something to the text window
-        if (GetKeyPressed(SDL_SCANCODE_SPACE))
+        speed++;
+        spriteY += speed;
+        bool hitBottom = spriteY > (512 - 50);
+        std::cout << "hitBottom: " << hitBottom << "\n";
+        if (hitBottom)
         {
-            std::cout << "You pressed the space bar.\n";
+            spriteY = 512 - 50;
+            speed = -speed;
+            screen.Clear(0xff0000);
+            ball.Draw(screen, spriteX, spriteY);
         }
-        // draw a sprite
-        rotatingGun.SetFrame(frame);
-        rotatingGun.Draw(screen, 100, 100);
-        if (++frame == 36) frame = 0;
+        else
+        {
+            screen.Clear(0);
+            ball.Draw(screen, spriteX, spriteY);
+        }
     }
 }
