@@ -1,5 +1,6 @@
 #include "game.hpp"
 
+#include <cassert>
 #include <iostream>
 
 namespace Tmpl8
@@ -25,16 +26,20 @@ namespace Tmpl8
     {
         // clear the graphics window
         screen.Clear(0);
-        // print something in the graphics window
-        screen.Print("hello world", 2, 2, 0xffffff);
-        // print something to the text window
-        if (GetKeyPressed(SDL_SCANCODE_SPACE))
+        // draw a grid
+        for (int x = 15; x < 800; x += 16)
         {
-            std::cout << "You pressed the space bar.\n";
+            for (int y = 6; y < 480; y += 12)
+            {
+                Pixel p = image.GetBuffer()[x / 16 + (y / 12) * 50];
+                Pixel red = p & 0xff0000;
+                Pixel green = p & 0x00ff00;
+                Pixel blue = p & 0x0000ff;
+                assert(y < 400);
+                screen.Bar(x, y, x + 12, y + 2, red);
+                screen.Bar(x, y + 4, x + 12, y + 6, green);
+                screen.Bar(x, y + 8, x + 12, y + 10, blue);
+            }
         }
-        // draw a sprite
-        rotatingGun.SetFrame(frame);
-        rotatingGun.Draw(screen, 100, 100);
-        if (++frame == 36) frame = 0;
     }
 }
