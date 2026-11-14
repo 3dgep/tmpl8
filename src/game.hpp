@@ -46,6 +46,9 @@ private:
 	Sprite rotatingGun{ "assets/aagun.tga", 36 };
 	int frame = 0;
 
+	// A tank, with 16 frames (the tank in 16 directions).
+	Sprite tank{ "assets/ctankbase.tga", 16 };
+
 	std::bitset<SDL_SCANCODE_COUNT> keys;       // keys that are down right now (updated by the template)
 	std::bitset<SDL_SCANCODE_COUNT> downEvents; // keys that went down since the previous frame
 	std::bitset<SDL_SCANCODE_COUNT> upEvents;   // keys that went up since the previous frame
