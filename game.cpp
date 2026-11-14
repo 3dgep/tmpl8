@@ -23,18 +23,11 @@ namespace Tmpl8
     // -----------------------------------------------------------
     void Game::Tick(float deltaTime)
     {
-        // clear the graphics window
         screen.Clear(0);
-        // print something in the graphics window
-        screen.Print("hello world", 2, 2, 0xffffff);
-        // print something to the text window
-        if (GetKeyPressed(SDL_SCANCODE_SPACE))
+        for (int i = 0; i < 16; i++)
         {
-            std::cout << "You pressed the space bar.\n";
+            tank.SetFrame(i);
+            tank.Draw(screen, i * 50, 0);
         }
-        // draw a sprite
-        rotatingGun.SetFrame(frame);
-        rotatingGun.Draw(screen, 100, 100);
-        if (++frame == 36) frame = 0;
     }
 }
