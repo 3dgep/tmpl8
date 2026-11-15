@@ -15,9 +15,12 @@ public:
 	void Init();
 	void Shutdown();
 	void Tick( float deltaTime );
-	void MouseUp( int button ) { /* implement if you want to detect mouse button presses */ }
-	void MouseDown( int button ) { /* implement if you want to detect mouse button presses */ }
-	void MouseMove( int x, int y ) { /* implement if you want to detect mouse movement (x, y is the mouse position in the window) */ }
+	void Update( float deltaTime ); // drives the tank
+	void Edit( float deltaTime );   // the map editor
+	// button 1 is the left mouse button, 3 the right one
+	void MouseUp( int button ) { if (button == 1) mouseLeft = false; if (button == 3) mouseRight = false; }
+	void MouseDown( int button ) { if (button == 1) mouseLeft = true; if (button == 3) mouseRight = true; }
+	void MouseMove( int x, int y ) { mousex = x, mousey = y; }
 
 	// Keyboard: use the SDL_SCANCODE_ names for the keys, e.g. SDL_SCANCODE_A, SDL_SCANCODE_SPACE, SDL_SCANCODE_LEFT.
 	bool GetKey( SDL_Scancode key ) const { return held.test( key ); }             // true while the key is held down
@@ -45,6 +48,9 @@ private:
 	// The example: a spinning gun turret.
 	Sprite rotatingGun{ "assets/aagun.tga", 36 };
 	int frame = 0;
+
+	int mousex = 0, mousey = 0;                 // the position of the mouse
+	bool mouseLeft = false, mouseRight = false; // true while the left or right mouse button is held down
 
 	std::bitset<SDL_SCANCODE_COUNT> keys;       // keys that are down right now (updated by the template)
 	std::bitset<SDL_SCANCODE_COUNT> downEvents; // keys that went down since the previous frame
