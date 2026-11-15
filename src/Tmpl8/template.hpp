@@ -8,7 +8,7 @@
 #include <string>
 
 // Size of the game window, in pixels.
-constexpr int ScreenWidth = 800;
+constexpr int ScreenWidth = 768;
 constexpr int ScreenHeight = 512;
 
 // Set to true to start in fullscreen (the 800x512 image is scaled up to fit the screen).
