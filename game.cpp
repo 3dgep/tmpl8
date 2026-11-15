@@ -1,9 +1,12 @@
 #include "game.hpp"
 
+#include <cmath>
 #include <iostream>
 
 namespace Tmpl8
 {
+    float x = 400, y = 256;
+
     // -----------------------------------------------------------
     // Initialize the application
     // -----------------------------------------------------------
@@ -23,18 +26,13 @@ namespace Tmpl8
     // -----------------------------------------------------------
     void Game::Tick(float deltaTime)
     {
-        // clear the graphics window
         screen.Clear(0);
-        // print something in the graphics window
-        screen.Print("hello world", 2, 2, 0xffffff);
-        // print something to the text window
-        if (GetKeyPressed(SDL_SCANCODE_SPACE))
-        {
-            std::cout << "You pressed the space bar.\n";
-        }
-        // draw a sprite
-        rotatingGun.SetFrame(frame);
-        rotatingGun.Draw(screen, 100, 100);
-        if (++frame == 36) frame = 0;
+        screen.Line(mousex, 0, mousex, 511, 0xff0000);
+        screen.Line(0, mousey, 799, mousey, 0xff0000);
+        float dx = x - mousex, dy = y - mousey;
+        float dist = std::sqrt(dx * dx + dy * dy);
+        if (dist > 0 && dist < 50)
+            x += dx / dist, y += dy / dist;
+        screen.Plot(static_cast<int>(x), static_cast<int>(y), 0xffffff);
     }
 }
