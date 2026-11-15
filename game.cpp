@@ -1,6 +1,7 @@
 #include "game.hpp"
 
 #include <iostream>
+#include <print>
 
 namespace Tmpl8
 {
@@ -9,6 +10,10 @@ namespace Tmpl8
     // -----------------------------------------------------------
     void Game::Init()
     {
+        for (int i = 0; i <= 8; i++)
+        {
+            std::println("1 << {} = {:3} = {:016b}", i, 1 << i, 1 << i);
+        }
     }
 
     // -----------------------------------------------------------
@@ -23,18 +28,9 @@ namespace Tmpl8
     // -----------------------------------------------------------
     void Game::Tick(float deltaTime)
     {
-        // clear the graphics window
-        screen.Clear(0);
-        // print something in the graphics window
-        screen.Print("hello world", 2, 2, 0xffffff);
-        // print something to the text window
-        if (GetKeyPressed(SDL_SCANCODE_SPACE))
-        {
-            std::cout << "You pressed the space bar.\n";
-        }
-        // draw a sprite
-        rotatingGun.SetFrame(frame);
-        rotatingGun.Draw(screen, 100, 100);
-        if (++frame == 36) frame = 0;
+        Pixel colour = 0xD7FFED00; // orange, garbage in alpha
+        Pixel mask = 255 << 8;     // the mask for green
+        Pixel green = colour & mask;
+        screen.Clear(green);
     }
 }
