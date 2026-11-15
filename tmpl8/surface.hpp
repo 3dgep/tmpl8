@@ -15,6 +15,12 @@ using Pixel = unsigned int; // a 32-bit color: 0xAARRGGBB (the alpha byte is ign
 constexpr Pixel RedMask = 0xff0000;
 constexpr Pixel GreenMask = 0x00ff00;
 constexpr Pixel BlueMask = 0x0000ff;
+constexpr Pixel AlphaMask = 0xff000000;
+
+// A sprite only draws the pixels that are at least this opaque (alpha 0 is fully transparent, 255 fully opaque).
+// There is no blending: a pixel is either drawn or not.
+constexpr unsigned int AlphaThreshold = 128;
+inline bool IsVisible( Pixel a_Color ) { return (a_Color >> 24) >= AlphaThreshold; }
 
 // additive blending
 inline Pixel AddBlend( Pixel a_Color1, Pixel a_Color2 )
@@ -79,7 +85,7 @@ private:
 };
 
 // A sprite: an image with one or more animation frames (a sprite sheet). The frames can be next to each other in
-// one row, or in a grid of columns and rows. Black pixels (0x000000) are transparent.
+// one row, or in a grid of columns and rows. Pixels with an alpha below AlphaThreshold are transparent.
 //
 //     Sprite gun( "assets/aagun.tga", 36 );            // 36 frames in one row
 //     Sprite hero( "assets/hero.png", 8, 4 );          // 8 columns and 4 rows: 32 frames

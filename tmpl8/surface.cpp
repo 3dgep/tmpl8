@@ -428,7 +428,7 @@ void Sprite::Draw( Surface& a_Target, int a_X, int a_Y ) const
 			for (int x = xs; x < width; x++)
 			{
 				const Pixel c1 = src[x];
-				if (c1 & 0xffffff) dest[addr + x] = c1; // black is transparent
+				if (IsVisible( c1 )) dest[addr + x] = c1; // skip transparent pixels
 			}
 			addr += dpitch;
 			src += m_Pitch;
@@ -447,7 +447,7 @@ void Sprite::DrawScaled( int a_X, int a_Y, int a_Width, int a_Height, Surface& a
 		const int u = static_cast<int>(static_cast<float>(x) * (static_cast<float>(m_Width) / static_cast<float>(a_Width)));
 		const int v = static_cast<int>(static_cast<float>(y) * (static_cast<float>(m_Height) / static_cast<float>(a_Height)));
 		const Pixel color = frame[u + v * m_Pitch];
-		if (color & 0xffffff) a_Target.GetBuffer()[tx + ty * a_Target.GetPitch()] = color;
+		if (IsVisible( color )) a_Target.GetBuffer()[tx + ty * a_Target.GetPitch()] = color;
 	}
 }
 
@@ -461,7 +461,7 @@ void Sprite::InitializeStartData()
 			const Pixel* addr = FramePixels( f ) + y * m_Pitch;
 			for (int x = 0; x < m_Width; ++x)
 			{
-				if (addr[x])
+				if (IsVisible( addr[x] ))
 				{
 					m_Start[f * m_Height + y] = x;
 					break;
