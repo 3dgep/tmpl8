@@ -34,20 +34,20 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup>
-    <!-- The .exe is placed next to tmpl8.slnx and the assets folder. Intermediate files go to build\vs: outside the
-         source folders and ignored by git (the CMake presets build in build\<preset>). -->
-    <TemplateRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..'))\</TemplateRoot>
-    <OutDir>$(TemplateRoot)</OutDir>
-    <IntDir>$(TemplateRoot)build\vs\$(Configuration)\</IntDir>
+    <!-- $(SolutionDir) is the folder of tmpl8.slnx, with the assets and lib folders: the .exe is placed there.
+         Intermediate files go to build\vs: outside the source folders and ignored by git (the CMake presets build in
+         build\<preset>). -->
+    <OutDir>$(SolutionDir)</OutDir>
+    <IntDir>$(SolutionDir)build\vs\$(Configuration)\</IntDir>
     <TargetName Condition="'$(Configuration)'=='Debug'">$(ProjectName)_debug</TargetName>
     <TargetName Condition="'$(Configuration)'=='Release'">$(ProjectName)</TargetName>
     <!-- Run from the template folder, so "assets/..." paths work when you press F5. -->
-    <LocalDebuggerWorkingDirectory>$(TemplateRoot)</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(TemplateRoot);$(TemplateRoot)lib\SDL3\include;$(TemplateRoot)lib\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(SolutionDir);$(SolutionDir)lib\SDL3\include;$(SolutionDir)lib\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
@@ -57,7 +57,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(TemplateRoot)lib\SDL3\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\SDL3\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
@@ -105,6 +105,6 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <!-- SDL3.dll must be next to the .exe: copy it there after every build. -->
   <Target Name="CopySDL3" AfterTargets="Build">
-    <Copy SourceFiles="$(TemplateRoot)lib\SDL3\lib\x64\SDL3.dll" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(SolutionDir)lib\SDL3\lib\x64\SDL3.dll" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
   </Target>
 </Project>
