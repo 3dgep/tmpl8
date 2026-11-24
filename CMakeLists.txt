@@ -30,6 +30,10 @@ add_executable(tmpl8
 	tmpl8/surface.cpp
 	tmpl8/surface.hpp
 )
+# The other source files of the game: every .cpp and .hpp file in the src folder.
+# CONFIGURE_DEPENDS makes the build notice a file that you add to (or remove from) the folder.
+file(GLOB _tmpl8_game_sources CONFIGURE_DEPENDS src/*.cpp src/*.hpp)
+target_sources(tmpl8 PRIVATE ${_tmpl8_game_sources})
 target_include_directories(tmpl8 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}" tmpl8 lib/stb)
 set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT tmpl8)
 
