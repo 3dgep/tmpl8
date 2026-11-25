@@ -48,7 +48,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)src\Tmpl8;$(SolutionDir)lib\SDL3\include;$(SolutionDir)lib\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)src\Tmpl8;$(SolutionDir)lib\SDL3\include;$(SolutionDir)lib\stb;$(SolutionDir)lib\Audio\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
@@ -58,8 +58,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)lib\SDL3\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\SDL3\lib\x64;$(SolutionDir)lib\Audio\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;Audio.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -90,12 +90,41 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\background.cpp" />
+    <ClCompile Include="src\enemy.cpp" />
     <ClCompile Include="src\game.cpp" />
+    <ClCompile Include="src\level.cpp" />
+    <ClCompile Include="src\level_select_scene.cpp" />
+    <ClCompile Include="src\menu.cpp" />
+    <ClCompile Include="src\menu_scene.cpp" />
+    <ClCompile Include="src\message_scene.cpp" />
+    <ClCompile Include="src\play_scene.cpp" />
+    <ClCompile Include="src\player.cpp" />
+    <ClCompile Include="src\settings.cpp" />
+    <ClCompile Include="src\settings_scene.cpp" />
+    <ClCompile Include="src\sounds.cpp" />
+    <ClCompile Include="src\text.cpp" />
     <ClCompile Include="src\Tmpl8\surface.cpp" />
     <ClCompile Include="src\Tmpl8\template.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\background.hpp" />
+    <ClInclude Include="src\body.hpp" />
+    <ClInclude Include="src\camera.hpp" />
+    <ClInclude Include="src\enemy.hpp" />
     <ClInclude Include="src\game.hpp" />
+    <ClInclude Include="src\level.hpp" />
+    <ClInclude Include="src\level_select_scene.hpp" />
+    <ClInclude Include="src\menu.hpp" />
+    <ClInclude Include="src\menu_scene.hpp" />
+    <ClInclude Include="src\message_scene.hpp" />
+    <ClInclude Include="src\play_scene.hpp" />
+    <ClInclude Include="src\player.hpp" />
+    <ClInclude Include="src\scene.hpp" />
+    <ClInclude Include="src\settings.hpp" />
+    <ClInclude Include="src\settings_scene.hpp" />
+    <ClInclude Include="src\sounds.hpp" />
+    <ClInclude Include="src\text.hpp" />
     <ClInclude Include="src\Tmpl8\surface.hpp" />
     <ClInclude Include="src\Tmpl8\template.hpp" />
   </ItemGroup>

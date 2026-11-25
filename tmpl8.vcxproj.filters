@@ -7,7 +7,20 @@
     <ClCompile Include="src\Tmpl8\template.cpp">
       <Filter>template code</Filter>
     </ClCompile>
+    <ClCompile Include="src\background.cpp" />
+    <ClCompile Include="src\enemy.cpp" />
     <ClCompile Include="src\game.cpp" />
+    <ClCompile Include="src\level.cpp" />
+    <ClCompile Include="src\level_select_scene.cpp" />
+    <ClCompile Include="src\menu.cpp" />
+    <ClCompile Include="src\menu_scene.cpp" />
+    <ClCompile Include="src\message_scene.cpp" />
+    <ClCompile Include="src\play_scene.cpp" />
+    <ClCompile Include="src\player.cpp" />
+    <ClCompile Include="src\settings.cpp" />
+    <ClCompile Include="src\settings_scene.cpp" />
+    <ClCompile Include="src\sounds.cpp" />
+    <ClCompile Include="src\text.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Tmpl8\surface.hpp">
@@ -16,7 +29,23 @@
     <ClInclude Include="src\Tmpl8\template.hpp">
       <Filter>template code</Filter>
     </ClInclude>
+    <ClInclude Include="src\background.hpp" />
+    <ClInclude Include="src\body.hpp" />
+    <ClInclude Include="src\camera.hpp" />
+    <ClInclude Include="src\enemy.hpp" />
     <ClInclude Include="src\game.hpp" />
+    <ClInclude Include="src\level.hpp" />
+    <ClInclude Include="src\level_select_scene.hpp" />
+    <ClInclude Include="src\menu.hpp" />
+    <ClInclude Include="src\menu_scene.hpp" />
+    <ClInclude Include="src\message_scene.hpp" />
+    <ClInclude Include="src\play_scene.hpp" />
+    <ClInclude Include="src\player.hpp" />
+    <ClInclude Include="src\scene.hpp" />
+    <ClInclude Include="src\settings.hpp" />
+    <ClInclude Include="src\settings_scene.hpp" />
+    <ClInclude Include="src\sounds.hpp" />
+    <ClInclude Include="src\text.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="template code">

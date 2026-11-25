@@ -7,11 +7,13 @@
 #include <cmath>
 #include <string>
 
-// Size of the game window, in pixels.
-constexpr int ScreenWidth = 800;
-constexpr int ScreenHeight = 512;
+// Size of the screen that the game draws on, in pixels.
+constexpr int ScreenWidth = 480;
+constexpr int ScreenHeight = 270;
+// The window is this many times as large as the screen: every pixel of the game becomes a 2x2 block.
+constexpr int ScreenScale = 2;
 
-// Set to true to start in fullscreen (the 800x512 image is scaled up to fit the screen).
+// Set to true to start in fullscreen (the image is scaled up to fit the screen).
 // Alt+Enter or F11 switches between fullscreen and a window while the game runs.
 constexpr bool StartFullscreen = false;
 

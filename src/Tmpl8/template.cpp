@@ -144,7 +144,7 @@ static float WindowScale()
 static void ScaleWindow( float a_Scale )
 {
 	if (SDL_GetWindowFlags( window ) & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_MAXIMIZED)) return;
-	int width = static_cast<int>(ScreenWidth * a_Scale + 0.5f), height = static_cast<int>(ScreenHeight * a_Scale + 0.5f);
+	int width = static_cast<int>(ScreenWidth * ScreenScale * a_Scale + 0.5f), height = static_cast<int>(ScreenHeight * ScreenScale * a_Scale + 0.5f);
 	SDL_Rect usable;
 	if (SDL_GetDisplayUsableBounds( SDL_GetDisplayForWindow( window ), &usable ))
 	{
@@ -198,7 +198,7 @@ SDL_AppResult SDL_AppInit( void** appstate, int argc, char* argv[] )
 	// and the canvas ends up 1x1 pixels. (SDL_WINDOW_FILL_DOCUMENT doesn't work in that version: the canvas stays 0x0.)
 	flags |= SDL_WINDOW_OPENGL;
 #endif
-	if (!SDL_CreateWindowAndRenderer( TemplateVersion, ScreenWidth, ScreenHeight, flags, &window, &app->renderer )) NotifyUser( SDL_GetError() );
+	if (!SDL_CreateWindowAndRenderer( TemplateVersion, ScreenWidth * ScreenScale, ScreenHeight * ScreenScale, flags, &window, &app->renderer )) NotifyUser( SDL_GetError() );
 #ifndef __EMSCRIPTEN__
 	// On a display with e.g. 150% scaling, make the window 1.5x as large, and keep it in the centre of the display.
 	app->windowScale = WindowScale();

@@ -1,6 +1,9 @@
 #include "game.hpp"
 
-#include <iostream>
+#include "menu_scene.hpp"
+
+#include <SDL3/SDL_events.h>
+#include <algorithm>
 
 namespace Tmpl8
 {
@@ -9,6 +12,12 @@ namespace Tmpl8
     // -----------------------------------------------------------
     void Game::Init()
     {
+        settings.Load();
+        sounds.SetMusicVolume(settings.musicVolume);
+        sounds.SetEffectsVolume(settings.effectsVolume);
+        if (settings.fullscreen)
+            SetFullscreen(true);
+        scene = std::make_unique<MenuScene>(*this);
     }
 
     // -----------------------------------------------------------
@@ -23,18 +32,20 @@ namespace Tmpl8
     // -----------------------------------------------------------
     void Game::Tick(float deltaTime)
     {
-        // clear the graphics window
-        screen.Clear(0);
-        // print something in the graphics window
-        screen.Print("hello world", 2, 2, 0xffffff);
-        // print something to the text window
-        if (GetKeyPressed(SDL_SCANCODE_SPACE))
-        {
-            std::cout << "You pressed the space bar.\n";
-        }
-        // draw a sprite
-        rotatingGun.SetFrame(frame);
-        rotatingGun.Draw(screen, 100, 100);
-        if (++frame == 36) frame = 0;
+        // The scenes work in seconds. A slow frame counts as 1/30 of a second at most, so that nothing moves too far
+        // in one frame (like after a break in the debugger).
+        const float seconds = std::min(deltaTime / 1000, 1.0f / 30);
+        scene->Tick(seconds);
+        scene->Draw(screen);
+        // A scene can't replace itself during its Tick (that would delete it), so the switch happens after Draw.
+        if (nextScene)
+            scene = std::move(nextScene);
+    }
+
+    void Game::Quit()
+    {
+        SDL_Event event{};
+        event.type = SDL_EVENT_QUIT; // the same as clicking the close button of the window
+        SDL_PushEvent(&event);
     }
 }
