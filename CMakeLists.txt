@@ -92,6 +92,37 @@ else()
 	target_link_libraries(tmpl8 PRIVATE SDL3::SDL3)
 endif()
 
+# --- Audio ------------------------------------------------------------------------------------------------------------
+
+# The Audio library (https://github.com/3dgep/Audio), for games that use it (from Part 17 of the C++ Fast Track).
+# lib/Audio has its headers, and the prebuilt static library for Visual Studio (Audio-2.1.1-windows-x64-static.zip).
+# The other builds (the web and Linux) download the source of the same version, and build it.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lib/Audio/include/Audio/Audio.hpp")
+	if(MSVC AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lib/Audio/lib/Release/Audio.lib")
+		add_library(Audio STATIC IMPORTED)
+		set_target_properties(Audio PROPERTIES
+			IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/lib/Audio/lib/Release/Audio.lib"
+			IMPORTED_LOCATION_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}/lib/Audio/lib/Debug/Audio.lib"
+			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/lib/Audio/include"
+		)
+		target_link_libraries(tmpl8 PRIVATE Audio)
+	else()
+		include(FetchContent)
+		FetchContent_Declare(Audio
+			URL "https://github.com/3dgep/Audio/archive/refs/tags/v2.1.1.tar.gz"
+			URL_HASH SHA256=64d3ecc28fff3a99a62ea1f3e49ddac0734f11ab6c4e145be94e660dc0723912
+			DOWNLOAD_EXTRACT_TIMESTAMP ON
+			EXCLUDE_FROM_ALL
+		)
+		FetchContent_MakeAvailable(Audio)
+		# stb_vorbis.c (in the Audio library) has a check that Clang (the compiler of Emscripten) warns about:
+		# hide that one warning, for that one file.
+		set_source_files_properties("${audio_SOURCE_DIR}/src/stb_vorbis.c" DIRECTORY "${audio_SOURCE_DIR}"
+			PROPERTIES COMPILE_OPTIONS -Wno-tautological-compare)
+		target_link_libraries(tmpl8 PRIVATE Audio::Audio)
+	endif()
+endif()
+
 # --- Output -----------------------------------------------------------------------------------------------------------
 
 if(EMSCRIPTEN)
