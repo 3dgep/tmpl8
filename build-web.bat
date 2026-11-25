@@ -16,7 +16,9 @@ where cmake >nul 2>nul && where ninja >nul 2>nul && goto build
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 if exist "%VSWHERE%" for /f "usebackq delims=" %%I in (`"%VSWHERE%" -latest -products * -property installationPath`) do set "VSDIR=%%I"
 if defined VSDIR set "VSCMAKE=%VSDIR%\Common7\IDE\CommonExtensions\Microsoft\CMake"
-if defined VSCMAKE if exist "%VSCMAKE%\Ninja\ninja.exe" set "PATH=%VSCMAKE%\CMake\bin;%VSCMAKE%\Ninja;%PATH%"
+rem Only add what is missing (at the end of the PATH), so a CMake that is on the PATH is still the one that runs.
+if defined VSCMAKE where cmake >nul 2>nul || set "PATH=%PATH%;%VSCMAKE%\CMake\bin"
+if defined VSCMAKE where ninja >nul 2>nul || set "PATH=%PATH%;%VSCMAKE%\Ninja"
 where cmake >nul 2>nul && where ninja >nul 2>nul && goto build
 echo CMake and Ninja were not found.
 echo Open the Visual Studio Installer, click Modify, and add "C++ CMake tools for Windows"
