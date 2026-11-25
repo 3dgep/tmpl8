@@ -9,7 +9,10 @@
     {
       "name": "base",
       "hidden": true,
-      "binaryDir": "${sourceDir}/build/${presetName}"
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "TMPL8_GAME_NAME": "$env{TMPL8_GAME_NAME}"
+      }
     },
     {
       "name": "windows-vs",
@@ -127,6 +130,66 @@
           "type": "build",
           "name": "web-release"
         }
+      ]
+    },
+    {
+      "name": "windows-vs-package",
+      "displayName": "Windows (Visual Studio 2026): configure, build Release and pack it in a zip file",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "windows-vs"
+        },
+        {
+          "type": "build",
+          "name": "windows-vs-release"
+        },
+        {
+          "type": "package",
+          "name": "windows-vs"
+        }
+      ]
+    },
+    {
+      "name": "web-package",
+      "displayName": "Web: configure, build Release and pack it in a zip file",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "web"
+        },
+        {
+          "type": "build",
+          "name": "web-release"
+        },
+        {
+          "type": "package",
+          "name": "web"
+        }
+      ]
+    }
+  ],
+  "packagePresets": [
+    {
+      "name": "windows-vs",
+      "displayName": "Windows (Visual Studio 2026): zip file of the Release version",
+      "configurePreset": "windows-vs",
+      "configurations": [
+        "Release"
+      ],
+      "generators": [
+        "ZIP"
+      ]
+    },
+    {
+      "name": "web",
+      "displayName": "Web: zip file of the Release version",
+      "configurePreset": "web",
+      "configurations": [
+        "Release"
+      ],
+      "generators": [
+        "ZIP"
       ]
     }
   ]

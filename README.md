@@ -40,7 +40,9 @@ download anything else.
 
 Double-click `package.bat`. It builds the Release version and packs your game in a zip file,
 `build\<name of your game>.zip`, and shows it in Explorer. The name of your game is the name of the
-template folder (you can also type a name at the top of `package.bat`).
+Visual Studio project (rename it in the Solution Explorer), or the name you type at the top of `package.bat`.
+`package.bat` runs the `windows-vs-package` workflow of the CMake build (see below), with the CMake that comes with
+Visual Studio.
 
 The zip file contains a folder with `<name of your game>.exe`, `SDL3.dll`, the `assets` folder and the SDL3
 license. Players unzip it and double-click the `.exe`: they don't need to install anything (the Release
@@ -79,6 +81,11 @@ automatically. From a terminal:
 
 Or configure and build Release in one step: `cmake --workflow --preset windows-vs` (or `linux`, or `web`).
 The builds go to `build/<preset>/<configuration>`, with the assets copied next to the executable.
+To also pack the Release version in a zip file, use `cmake --workflow --preset windows-vs-package` (this is what
+`package.bat` runs) or `cmake --workflow --preset web-package`. They write `build/<name of your game>.zip` and
+`build/<name of your game>-web.zip` (with `index.html` at the top, ready for itch.io). The package presets
+`windows-vs` and `web` (`cpack --preset web`) only pack a Release build that is already there. Set the
+`TMPL8_GAME_NAME` environment variable to choose the name of your game.
 Use RelWithDebInfo (optimized, with debug information) for profiling.
 
 - **Windows** uses the SDL3 in `lib/SDL3`, like `tmpl8.slnx`.
@@ -162,16 +169,17 @@ Report problems and suggestions to Jeremiah van Oosten if working on this connec
   window, with as many pixels as the screen has, so SDL_SCALEMODE_PIXELART does all the scaling.
 - VSync: `StartVSync` in `template.hpp`, and `SetVSync()`, `IsVSync()` and `ToggleVSync()` (no need to change
   `template.cpp` to turn it off).
-- Web builds with Emscripten: double-click `build-web.bat`, which runs the `web` preset of the CMake build. SDL runs the main loop (SDL3's main callbacks in
-  `template.cpp`), so the same code runs on Windows and in the browser.
+- Web builds with Emscripten: double-click `build-web.bat`, which runs the `web` preset of the CMake build. SDL
+  runs the main loop (SDL3's main callbacks in `template.cpp`), so the same code runs on Windows and in the browser.
 - CMake build (`CMakeLists.txt`, `CMakePresets.json`) for Windows (Visual Studio or Ninja), Linux and the web.
   The Emscripten toolchain (`cmake/EmscriptenToolchain.cmake`) installs the emsdk when it isn't found.
 - `build-web.bat` and the CMake build also compile the `.cpp` files in a `src` folder and its subfolders, for games
   with more files than `game.cpp`.
 - Images are also found next to the executable when the game is started from another folder, and file names
   with accents or other scripts work.
-- `package.bat` builds the Release version and packs the game in a zip file to share. Release builds link the C++
-  runtime statically, so players don't need the Visual C++ Redistributable.
+- `package.bat` builds the Release version and packs the game in a zip file to share, with the
+  `windows-vs-package` workflow of the CMake build (CPack); `web-package` does the same for the web. Release builds
+  link the C++ runtime statically, so players don't need the Visual C++ Redistributable.
 - 2D sprite sheets: `Sprite( file, columns, rows )` (rows is 1 by default, so `Sprite( file, frames )` still works),
   `SetFrame( column, row )`, `Columns()` and `Rows()`. `DrawScaled` no longer draws outside the target surface.
 - Removed the unused `Sprite` flags (`FLARE`, `OPFLARE`, ... and `SetFlags`/`GetFlags`); only `FLARE` did anything.

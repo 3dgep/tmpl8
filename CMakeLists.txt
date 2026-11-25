@@ -146,3 +146,64 @@ else()
 	# Visual Studio: run from the template folder when debugging (F5), like the solution does.
 	set_target_properties(tmpl8 PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
+
+# --- Packaging --------------------------------------------------------------------------------------------------------
+
+# "cmake --workflow --preset windows-vs-package" (or "web-package") builds the Release version and packs the game in a
+# zip file that you can share: build/<name of your game>.zip (build/<name of your game>-web.zip for the web).
+# package.bat runs the Windows one. The install rules below say what goes in it (only the "game" component, so the
+# install rules of libraries that are built as part of the project are left out).
+
+# The name of your game: TMPL8_GAME_NAME (package.bat sets it from the GAME_NAME at its top, through the environment
+# variable of the same name, see CMakePresets.json), or else the name of the Visual Studio project (tmpl8\*.vcxproj),
+# which you can rename in the Solution Explorer.
+set(_tmpl8_game_name "${TMPL8_GAME_NAME}")
+if(NOT _tmpl8_game_name)
+	file(GLOB _tmpl8_vcxproj "${CMAKE_CURRENT_SOURCE_DIR}/tmpl8/*.vcxproj")
+	if(_tmpl8_vcxproj)
+		list(GET _tmpl8_vcxproj 0 _tmpl8_vcxproj)
+		get_filename_component(_tmpl8_game_name "${_tmpl8_vcxproj}" NAME_WE)
+		file(STRINGS "${_tmpl8_vcxproj}" _tmpl8_project_name REGEX "<ProjectName>.*</ProjectName>" LIMIT_COUNT 1)
+		if(_tmpl8_project_name MATCHES "<ProjectName>(.*)</ProjectName>")
+			set(_tmpl8_game_name "${CMAKE_MATCH_1}")
+		endif()
+	else()
+		set(_tmpl8_game_name "${PROJECT_NAME}")
+	endif()
+endif()
+
+if(EMSCRIPTEN)
+	# The web page, with index.html at the top of the zip file (itch.io looks for it there).
+	install(FILES
+		"$<TARGET_FILE:tmpl8>"
+		"$<TARGET_FILE_DIR:tmpl8>/index.js"
+		"$<TARGET_FILE_DIR:tmpl8>/index.wasm"
+		"$<TARGET_FILE_DIR:tmpl8>/index.data"
+		DESTINATION . COMPONENT game)
+	set(CPACK_PACKAGE_FILE_NAME "${_tmpl8_game_name}-web")
+	set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+else()
+	# <name of your game>.exe, with the assets folder next to it (and SDL3.dll and its license on Windows).
+	install(PROGRAMS "$<TARGET_FILE:tmpl8>" DESTINATION . RENAME "${_tmpl8_game_name}${CMAKE_EXECUTABLE_SUFFIX}"
+		COMPONENT game)
+	install(DIRECTORY assets/ DESTINATION assets COMPONENT game)
+	if(WIN32)
+		install(FILES $<TARGET_RUNTIME_DLLS:tmpl8> DESTINATION . COMPONENT game)
+	endif()
+	if(_tmpl8_sdl3_dll AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lib/SDL3/LICENSE.txt")
+		install(FILES lib/SDL3/LICENSE.txt DESTINATION . RENAME LICENSE-SDL3.txt COMPONENT game)
+	endif()
+	# The zip file has a folder with the name of your game, so it unzips into a folder of its own.
+	set(CPACK_PACKAGE_FILE_NAME "${_tmpl8_game_name}")
+	set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY ON)
+	set(CPACK_COMPONENT_INCLUDE_TOPLEVEL_DIRECTORY ON)
+endif()
+
+set(CPACK_PACKAGE_NAME "${_tmpl8_game_name}")
+set(CPACK_GENERATOR ZIP)
+set(CPACK_PACKAGE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build")
+set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
+set(CPACK_COMPONENTS_ALL game)
+set(CPACK_COMPONENTS_GROUPING ALL_COMPONENTS_IN_ONE)
+set(CPACK_VERBATIM_VARIABLES ON)
+include(CPack)
