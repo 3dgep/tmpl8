@@ -51,12 +51,14 @@ build has the C++ runtime built in). Send the zip file to your friends, upload i
 The template can also be built for the web with [Emscripten](https://emscripten.org), so you can
 share your game as a web page (for example on itch.io or GitHub Pages):
 
-1. Install the emsdk once, following https://emscripten.org/docs/getting_started/downloads.html
-   (install it to `C:\emsdk`, or next to your template folder).
-2. Double-click `build-web.bat`. The first build takes a few minutes, because it also
-   downloads and builds SDL3 for the web.
-3. The game opens in your browser. The files for the web are in the `web-build` folder: upload
+1. Double-click `build-web.bat`. It runs the `web` preset of the CMake build (see below), with the CMake and
+   Ninja that come with Visual Studio. The first build takes a while: it also downloads and builds SDL3 for
+   the web, and if Emscripten isn't installed yet, it installs the emsdk too (about 1 GB, which needs Python 3).
+2. The game opens in your browser. The files for the web are in the `build\web\Release` folder: upload
    all of them (`index.html`, `index.js`, `index.wasm` and `index.data`) to your web host.
+
+If you installed the emsdk yourself, put it in `C:\emsdk` or next to your template folder, or set the `EMSDK`
+environment variable to its folder.
 
 The game fills the browser window; the button in the top-right corner (it fades out while the mouse doesn't move),
 F11 or Alt+Enter switch to fullscreen. In the browser, `std::cout` writes to the browser console (press F12 to see it).
@@ -87,7 +89,8 @@ Use RelWithDebInfo (optimized, with debug information) for profiling.
   or from `C:\emsdk` or an `emsdk` folder next to the template folder. If Emscripten isn't found, the emsdk is
   downloaded and installed once (in `%LOCALAPPDATA%\tmpl8\emsdk`, or `~/.local/share/tmpl8/emsdk` on Linux),
   which needs Python 3. The result is `build/web/Release/index.html` (with `index.js`, `index.wasm` and
-  `index.data`): upload those files, or test them with `emrun build/web/Release/index.html`.
+  `index.data`): upload those files, or test them with `cmake --build --preset web-release --target run`, which
+  serves them with emrun and opens them in the browser.
 - `-DTMPL8_FETCH_SDL3=ON` always builds SDL3 from source.
 
 ## You can go further by
@@ -159,7 +162,7 @@ Report problems and suggestions to Jeremiah van Oosten if working on this connec
   window, with as many pixels as the screen has, so SDL_SCALEMODE_PIXELART does all the scaling.
 - VSync: `StartVSync` in `template.hpp`, and `SetVSync()`, `IsVSync()` and `ToggleVSync()` (no need to change
   `template.cpp` to turn it off).
-- Web builds with Emscripten: double-click `build-web.bat`. SDL runs the main loop (SDL3's main callbacks in
+- Web builds with Emscripten: double-click `build-web.bat`, which runs the `web` preset of the CMake build. SDL runs the main loop (SDL3's main callbacks in
   `template.cpp`), so the same code runs on Windows and in the browser.
 - CMake build (`CMakeLists.txt`, `CMakePresets.json`) for Windows (Visual Studio or Ninja), Linux and the web.
   The Emscripten toolchain (`cmake/EmscriptenToolchain.cmake`) installs the emsdk when it isn't found.

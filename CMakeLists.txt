@@ -112,6 +112,21 @@ if(EMSCRIPTEN)
 	set_property(TARGET tmpl8 APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tmpl8/web-shell.html")
 	file(GLOB_RECURSE _tmpl8_assets CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/assets/*")
 	set_property(TARGET tmpl8 APPEND PROPERTY LINK_DEPENDS ${_tmpl8_assets})
+	# "cmake --build --preset web-release --target run" builds the game and opens it in the browser. A browser can't
+	# run it from a file on disk (file://), so emrun serves it from a local web server, until you stop it (Ctrl+C).
+	find_program(TMPL8_EMRUN NAMES emrun emrun.bat HINTS "${EMSCRIPTEN_ROOT_PATH}" NO_DEFAULT_PATH)
+	if(TMPL8_EMRUN)
+		set(_tmpl8_emrun "${TMPL8_EMRUN}")
+		if(CMAKE_HOST_WIN32 AND DEFINED ENV{EMSDK_PYTHON})
+			# emrun is a Python script too: give it the Python that the toolchain found (see EmscriptenToolchain.cmake).
+			set(_tmpl8_emrun "${CMAKE_COMMAND}" -E env "EMSDK_PYTHON=$ENV{EMSDK_PYTHON}" "${TMPL8_EMRUN}")
+		endif()
+		add_custom_target(run
+			COMMAND ${_tmpl8_emrun} --no_emrun_detect "$<TARGET_FILE:tmpl8>"
+			DEPENDS tmpl8
+			USES_TERMINAL
+			VERBATIM)
+	endif()
 else()
 	if(WIN32)
 		# Only Debug builds have a console window (like the Visual Studio solution).
