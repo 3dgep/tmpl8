@@ -44,6 +44,11 @@ Visual Studio project (rename it in the Solution Explorer), or the name you type
 `package.bat` runs the `windows-vs-package` workflow of the CMake build (see below), with the CMake that comes with
 Visual Studio.
 
+`package.bat --web` packs the web version instead (see [Making a web build](#making-a-web-build)):
+`build\<name of your game>-web.zip`, with `index.html`, `index.js`, `index.wasm` and `index.data` at the top of the
+zip file. Upload it to itch.io as an HTML game. Run it from a command prompt in the template folder, or make a
+shortcut to `package.bat` and add `--web` to its target.
+
 The zip file contains a folder with `<name of your game>.exe`, `SDL3.dll`, the `assets` folder and the SDL3
 license. Players unzip it and double-click the `.exe`: they don't need to install anything (the Release
 build has the C++ runtime built in). Send the zip file to your friends, upload it to itch.io, or hand it in.
@@ -178,7 +183,8 @@ Report problems and suggestions to Jeremiah van Oosten if working on this connec
 - Images are also found next to the executable when the game is started from another folder, and file names
   with accents or other scripts work.
 - `package.bat` builds the Release version and packs the game in a zip file to share, with the
-  `windows-vs-package` workflow of the CMake build (CPack); `web-package` does the same for the web. Release builds
+  `windows-vs-package` workflow of the CMake build (CPack); `package.bat --web` (the `web-package` workflow) does
+  the same for the web. Release builds
   link the C++ runtime statically, so players don't need the Visual C++ Redistributable.
 - 2D sprite sheets: `Sprite( file, columns, rows )` (rows is 1 by default, so `Sprite( file, frames )` still works),
   `SetFrame( column, row )`, `Columns()` and `Rows()`. `DrawScaled` no longer draws outside the target surface.
