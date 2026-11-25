@@ -140,6 +140,14 @@ if(CMAKE_HOST_WIN32)
 	set(CMAKE_CXX_COMPILER_LAUNCHER "${CMAKE_COMMAND};-E;env;EMSDK_PYTHON=${_tmpl8_emsdk_python}")
 	set(CMAKE_C_LINKER_LAUNCHER "${CMAKE_COMMAND};-E;env;EMSDK_PYTHON=${_tmpl8_emsdk_python}")
 	set(CMAKE_CXX_LINKER_LAUNCHER "${CMAKE_COMMAND};-E;env;EMSDK_PYTHON=${_tmpl8_emsdk_python}")
+	# Static libraries (that are built as part of the game) are packed by emar and emranlib, which are Python scripts
+	# too, but CMake has no launcher for them: give them the Python in the rules that make a static library.
+	set(_tmpl8_env "\"${CMAKE_COMMAND}\" -E env \"EMSDK_PYTHON=${_tmpl8_emsdk_python}\"")
+	foreach(_tmpl8_lang C CXX)
+		set(CMAKE_${_tmpl8_lang}_ARCHIVE_CREATE "${_tmpl8_env} <CMAKE_AR> qc <TARGET> <LINK_FLAGS> <OBJECTS>")
+		set(CMAKE_${_tmpl8_lang}_ARCHIVE_APPEND "${_tmpl8_env} <CMAKE_AR> q <TARGET> <LINK_FLAGS> <OBJECTS>")
+		set(CMAKE_${_tmpl8_lang}_ARCHIVE_FINISH "${_tmpl8_env} <CMAKE_RANLIB> <TARGET>")
+	endforeach()
 endif()
 
 include("${_tmpl8_emscripten}/cmake/Modules/Platform/Emscripten.cmake")
