@@ -23,9 +23,9 @@ call "%EMSDK%\emsdk_env.bat" >nul 2>nul
 :build
 echo Building the web version (the first build also downloads and builds SDL3, which takes a while)...
 if not exist web-build mkdir web-build
-rem The source files of the game: game.cpp, and every .cpp file in the src folder.
+rem The source files of the game: game.cpp, and every .cpp file in the src folder (and its subfolders).
 set "SOURCES=game.cpp"
-for %%F in (src\*.cpp) do call set "SOURCES=%%SOURCES%% %%F"
+if exist src for /R src %%F in (*.cpp) do call set "SOURCES=%%SOURCES%% "%%F""
 call em++ %SOURCES% tmpl8\template.cpp tmpl8\surface.cpp ^
     -I tmpl8 -I . -I lib\stb ^
     -std=c++23 -O2 ^

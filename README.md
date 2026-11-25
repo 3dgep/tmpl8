@@ -22,7 +22,7 @@ is available, such as sprites, bitmap fonts, and vector math support.
 
 When your game grows, put its other `.cpp` and `.hpp` files in a `src` folder next to `game.cpp`. In Visual Studio's
 **Add New Item** dialog, change the **Location** to that folder. The web build (`build-web.bat`) and the CMake build
-compile every `.cpp` file in `src` without changes.
+compile every `.cpp` file in `src` (and in its subfolders) without changes.
 
 Press **Alt+Enter** or **F11** to switch between fullscreen and a window (in a web build too), and **Escape**
 to quit (in a browser, Escape leaves fullscreen). To start in fullscreen, set `StartFullscreen` to `true` in
@@ -163,8 +163,8 @@ Report problems and suggestions to Jeremiah van Oosten if working on this connec
   `template.cpp`), so the same code runs on Windows and in the browser.
 - CMake build (`CMakeLists.txt`, `CMakePresets.json`) for Windows (Visual Studio or Ninja), Linux and the web.
   The Emscripten toolchain (`cmake/EmscriptenToolchain.cmake`) installs the emsdk when it isn't found.
-- `build-web.bat` and the CMake build also compile the `.cpp` files in a `src` folder, for games with more files
-  than `game.cpp`.
+- `build-web.bat` and the CMake build also compile the `.cpp` files in a `src` folder and its subfolders, for games
+  with more files than `game.cpp`.
 - Images are also found next to the executable when the game is started from another folder, and file names
   with accents or other scripts work.
 - `package.bat` builds the Release version and packs the game in a zip file to share. Release builds link the C++
