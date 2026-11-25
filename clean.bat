@@ -1,5 +1,6 @@
 @echo off
-rem Deletes everything Visual Studio generates, so the folder is small enough to zip and hand in.
+rem Deletes everything the builds generate (Visual Studio, CMake and the web build), so the folder is small enough
+rem to zip and hand in.
 rem Close Visual Studio first. Double-click this file to run it.
 cd /d "%~dp0"
 if exist .vs rd /s /q .vs
