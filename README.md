@@ -73,6 +73,11 @@ The `assets` folder is packed into `index.data`, so loading images works the sam
 
 ## Building with CMake (Windows, Linux and the web)
 
+To build and start the Windows version without opening Visual Studio, double-click `build.bat`. It runs the
+`windows-vs` configure preset and the `windows-vs-release` build preset (with the CMake that comes with Visual
+Studio), and starts `build\windows-vs\Release\tmpl8.exe`. `build.bat --debug` builds and starts the Debug
+version instead.
+
 If you know CMake, you can also build the template with `CMakeLists.txt` and the presets in
 `CMakePresets.json`. Visual Studio (File > Open > Folder), VS Code and CLion pick up the presets
 automatically. From a terminal:
@@ -177,6 +182,7 @@ Report problems and suggestions to Jeremiah van Oosten if working on this connec
 - Web builds with Emscripten: double-click `build-web.bat`, which runs the `web` preset of the CMake build. SDL
   runs the main loop (SDL3's main callbacks in `template.cpp`), so the same code runs on Windows and in the browser.
 - CMake build (`CMakeLists.txt`, `CMakePresets.json`) for Windows (Visual Studio or Ninja), Linux and the web.
+  `build.bat` builds and starts the Windows version with the `windows-vs` presets.
   The Emscripten toolchain (`cmake/EmscriptenToolchain.cmake`) installs the emsdk when it isn't found.
 - `build-web.bat` and the CMake build also compile the `.cpp` files in a `src` folder and its subfolders, for games
   with more files than `game.cpp`.
