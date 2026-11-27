@@ -20,9 +20,11 @@ is available, such as sprites, bitmap fonts, and vector math support.
 3. Press **F5** (or the green **Local Windows Debugger** button) to build and run it.
 4. Replace the example code in `game.cpp` with your own code.
 
-When your game grows, put its other `.cpp` and `.hpp` files in a `src` folder next to `game.cpp`. In Visual Studio's
-**Add New Item** dialog, change the **Location** to that folder. The web build (`build-web.bat`) and the CMake build
-compile every `.cpp` file in `src` (and in its subfolders) without changes.
+All the source files are in the `src` folder: `game.cpp` and `game.hpp` for your game, and the template itself in
+`src/Tmpl8` (named after the `Tmpl8` namespace). When your game grows, put its other `.cpp` and `.hpp` files in `src`
+too. Visual Studio's **Add New Item** dialog puts new files next to `tmpl8.vcxproj`, so type `src\` in front of the name
+(like `src\player.hpp`), or change the **Location** to the `src` folder. The web build (`build-web.bat`) and the CMake
+build compile every `.cpp` file in `src` (and in its subfolders) without changes.
 
 Press **Alt+Enter** or **F11** to switch between fullscreen and a window (in a web build too), and **Escape**
 to quit (in a browser, Escape leaves fullscreen). To start in fullscreen, set `StartFullscreen` to `true` in
@@ -184,8 +186,9 @@ Report problems and suggestions to Jeremiah van Oosten if working on this connec
 - CMake build (`CMakeLists.txt`, `CMakePresets.json`) for Windows (Visual Studio or Ninja), Linux and the web.
   `build.bat` builds and starts the Windows version with the `windows-vs` presets.
   The Emscripten toolchain (`cmake/EmscriptenToolchain.cmake`) installs the emsdk when it isn't found.
-- `build-web.bat` and the CMake build also compile the `.cpp` files in a `src` folder and its subfolders, for games
-  with more files than `game.cpp`.
+- All source files in `src` (`game.cpp`, `game.hpp` and your own files), the template in `src/Tmpl8`, and the
+  project file (`tmpl8.vcxproj`) next to `tmpl8.slnx`. `build-web.bat` and the CMake build compile every `.cpp` file
+  in `src` and its subfolders.
 - Images are also found next to the executable when the game is started from another folder, and file names
   with accents or other scripts work.
 - `package.bat` builds the Release version and packs the game in a zip file to share, with the

@@ -22,21 +22,14 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:DebugDLL>")
 option(TMPL8_FETCH_SDL3 "Download and build SDL3 from source instead of using the SDL3 in lib/SDL3 (Windows) or an installed SDL3 (Linux)" OFF)
 set(TMPL8_SDL3_VERSION "3.4.20")
 
-add_executable(tmpl8
-	game.cpp
-	game.hpp
-	tmpl8/template.cpp
-	tmpl8/template.hpp
-	tmpl8/surface.cpp
-	tmpl8/surface.hpp
-)
-# The other source files of the game: every .cpp and .hpp file in the src folder (and its subfolders).
-# CONFIGURE_DEPENDS makes the build notice a file that you add to (or remove from) the folder.
-file(GLOB_RECURSE _tmpl8_game_sources CONFIGURE_DEPENDS src/*.cpp src/*.hpp)
-target_sources(tmpl8 PRIVATE ${_tmpl8_game_sources})
+add_executable(tmpl8)
+# The source files: every .cpp and .hpp file in the src folder and its subfolders (game.cpp and game.hpp, the files you
+# add, and the template in src/Tmpl8). CONFIGURE_DEPENDS makes the build notice a file that you add (or remove).
+file(GLOB_RECURSE _tmpl8_sources CONFIGURE_DEPENDS src/*.cpp src/*.hpp)
+target_sources(tmpl8 PRIVATE ${_tmpl8_sources})
 # Show the subfolders of src in the IDE too.
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/src" PREFIX src FILES ${_tmpl8_game_sources})
-target_include_directories(tmpl8 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}" tmpl8 lib/stb)
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/src" PREFIX src FILES ${_tmpl8_sources})
+target_include_directories(tmpl8 PRIVATE src src/Tmpl8 lib/stb)
 set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT tmpl8)
 
 if(MSVC)
@@ -106,10 +99,10 @@ if(EMSCRIPTEN)
 	set_target_properties(tmpl8 PROPERTIES OUTPUT_NAME index SUFFIX ".html")
 	target_link_options(tmpl8 PRIVATE
 		"--preload-file=${CMAKE_CURRENT_SOURCE_DIR}/assets@assets"
-		"--shell-file=${CMAKE_CURRENT_SOURCE_DIR}/tmpl8/web-shell.html"
+		"--shell-file=${CMAKE_CURRENT_SOURCE_DIR}/src/Tmpl8/web-shell.html"
 		-sALLOW_MEMORY_GROWTH
 	)
-	set_property(TARGET tmpl8 APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tmpl8/web-shell.html")
+	set_property(TARGET tmpl8 APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/Tmpl8/web-shell.html")
 	file(GLOB_RECURSE _tmpl8_assets CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/assets/*")
 	set_property(TARGET tmpl8 APPEND PROPERTY LINK_DEPENDS ${_tmpl8_assets})
 	# "cmake --build --preset web-release --target run" builds the game and opens it in the browser. A browser can't
@@ -155,11 +148,11 @@ endif()
 # install rules of libraries that are built as part of the project are left out).
 
 # The name of your game: TMPL8_GAME_NAME (package.bat sets it from the GAME_NAME at its top, through the environment
-# variable of the same name, see CMakePresets.json), or else the name of the Visual Studio project (tmpl8\*.vcxproj),
+# variable of the same name, see CMakePresets.json), or else the name of the Visual Studio project (*.vcxproj),
 # which you can rename in the Solution Explorer.
 set(_tmpl8_game_name "${TMPL8_GAME_NAME}")
 if(NOT _tmpl8_game_name)
-	file(GLOB _tmpl8_vcxproj "${CMAKE_CURRENT_SOURCE_DIR}/tmpl8/*.vcxproj")
+	file(GLOB _tmpl8_vcxproj "${CMAKE_CURRENT_SOURCE_DIR}/*.vcxproj")
 	if(_tmpl8_vcxproj)
 		list(GET _tmpl8_vcxproj 0 _tmpl8_vcxproj)
 		get_filename_component(_tmpl8_game_name "${_tmpl8_vcxproj}" NAME_WE)

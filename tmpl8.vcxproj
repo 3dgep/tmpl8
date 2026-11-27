@@ -34,7 +34,8 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup>
-    <!-- $(SolutionDir) is the folder of tmpl8.slnx, with the assets and lib folders: the .exe is placed there.
+    <!-- $(SolutionDir) is the folder of tmpl8.slnx and tmpl8.vcxproj, with the src, assets and lib folders: the .exe
+         is placed there.
          Intermediate files go to build\vs: outside the source folders and ignored by git (the CMake presets build in
          build\<preset>). -->
     <OutDir>$(SolutionDir)</OutDir>
@@ -47,7 +48,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir);$(SolutionDir)lib\SDL3\include;$(SolutionDir)lib\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)src\Tmpl8;$(SolutionDir)lib\SDL3\include;$(SolutionDir)lib\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
@@ -89,18 +90,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\game.cpp" />
-    <ClCompile Include="surface.cpp" />
-    <ClCompile Include="template.cpp" />
+    <ClCompile Include="src\game.cpp" />
+    <ClCompile Include="src\Tmpl8\surface.cpp" />
+    <ClCompile Include="src\Tmpl8\template.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\game.hpp" />
-    <ClInclude Include="surface.hpp" />
-    <ClInclude Include="template.hpp" />
+    <ClInclude Include="src\game.hpp" />
+    <ClInclude Include="src\Tmpl8\surface.hpp" />
+    <ClInclude Include="src\Tmpl8\template.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\README.md" />
-    <None Include="web-shell.html" />
+    <None Include="README.md" />
+    <None Include="src\Tmpl8\web-shell.html" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <!-- SDL3.dll must be next to the .exe: copy it there after every build. -->
